@@ -22,7 +22,7 @@ jobs:
         export CXX=/usr/bin/g++-9
         mkdir "${{ runner.workspace }}/_build"
         cd "${{ runner.workspace }}/_build"
-        cmake $GITHUB_WORKSPACE -G "Ninja"
+        cmake $GITHUB_WORKSPACE
       shell: bash
 
     - name: Build Release
