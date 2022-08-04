@@ -23,7 +23,6 @@ jobs:
         mkdir "${{ runner.workspace }}/_build"
         cd "${{ runner.workspace }}/_build"
         cmake $GITHUB_WORKSPACE
-        -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
       shell: bash
 
     - name: Build Release
