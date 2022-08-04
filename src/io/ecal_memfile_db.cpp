@@ -21,6 +21,7 @@
  * @brief  eCAL global memory file map (database) handling
 **/
 
+#include "ecal_global_accessors.h"
 #include "ecal_memfile_os.h"
 #include "ecal_memfile_db.h"
 
@@ -28,8 +29,6 @@
 
 namespace eCAL
 {
-  CMemFileMap* g_memfile_map();
-
   CMemFileMap::~CMemFileMap()
   {
     Destroy();

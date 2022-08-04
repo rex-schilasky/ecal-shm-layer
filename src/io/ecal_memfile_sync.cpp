@@ -32,11 +32,8 @@
 
 namespace eCAL
 {
-  CSyncMemoryFile::CSyncMemoryFile(const std::string& base_name_, size_t size_, size_t min_size_, size_t reserve_, int timeout_open_ms_, int timeout_ack_ms_) :
-    m_min_size(min_size_),
-    m_reserve(reserve_),
-    m_timeout_open(timeout_open_ms_),
-    m_timeout_ack(timeout_ack_ms_),
+  CSyncMemoryFile::CSyncMemoryFile(const std::string& base_name_, size_t size_, SSyncMemoryFileAttr attr_) :
+    m_attr(attr_),
     m_created(false)
   {
     Create(base_name_, size_);
@@ -68,7 +65,7 @@ namespace eCAL
     {
       SEventHandlePair event_pair;
       gOpenEvent(&event_pair.event_snd, event_snd_name);
-      if (m_timeout_ack != 0)
+      if (m_attr.timeout_ack_ms != 0)
       {
         gOpenEvent(&event_pair.event_ack, event_ack_name);
       }
@@ -77,7 +74,7 @@ namespace eCAL
     }
     else
     {
-      if (m_timeout_ack != 0)
+      if (m_attr.timeout_ack_ms != 0)
       {
         // okay we have registered process events for that process id
         // we have to check the acknowledge event because it's possible that this
@@ -105,7 +102,7 @@ namespace eCAL
     {
       SEventHandlePair event_pair = iter->second;
       gCloseEvent(event_pair.event_snd);
-      if (m_timeout_ack != 0)
+      if (m_attr.timeout_ack_ms != 0)
       {
         gCloseEvent(event_pair.event_ack);
       }
@@ -128,7 +125,7 @@ namespace eCAL
       Logging::Log(log_level_debug4, m_base_name + "::CSyncMemoryFile::CheckSize - RECREATE");
 #endif
       // estimate size of memory file
-      size_t memfile_size = sizeof(SMemFileHeader) + size_ + static_cast<size_t>((static_cast<float>(m_reserve) / 100.0f) * static_cast<float>(size_));
+      size_t memfile_size = sizeof(SMemFileHeader) + size_ + static_cast<size_t>((static_cast<float>(m_attr.reserve) / 100.0f) * static_cast<float>(size_));
 
       // recreate the file
       if (!Recreate(memfile_size)) return false;
@@ -140,7 +137,7 @@ namespace eCAL
     return false;
   }
 
-  bool CSyncMemoryFile::Write(const void* buf_, size_t len_, long long id_, long long clock_, size_t hash_, long long time_, bool zero_copy_)
+  bool CSyncMemoryFile::Write(const SWriterData& data_)
   {
     if (!m_created)
     {
@@ -156,20 +153,20 @@ namespace eCAL
     // create user file header
     struct SMemFileHeader memfile_hdr;
     // set data size
-    memfile_hdr.data_size         = static_cast<unsigned long>(len_);
+    memfile_hdr.data_size         = static_cast<unsigned long>(data_.len);
     // set header id
-    memfile_hdr.id                = static_cast<unsigned long>(id_);
+    memfile_hdr.id                = static_cast<unsigned long>(data_.id);
     // set header clock
-    memfile_hdr.clock             = static_cast<unsigned long>(clock_);
+    memfile_hdr.clock             = static_cast<unsigned long>(data_.clock);
     // set header time
-    memfile_hdr.time              = static_cast<long long>(time_);
+    memfile_hdr.time              = static_cast<long long>(data_.time);
     // set header hash
-    memfile_hdr.hash              = static_cast<size_t>(hash_);
+    memfile_hdr.hash              = static_cast<size_t>(data_.hash);
     // set zero copy
-    memfile_hdr.options.zero_copy = static_cast<unsigned char>(zero_copy_);
+    memfile_hdr.options.zero_copy = static_cast<unsigned char>(data_.zero_copy);
 
     // acquire write access
-    bool write_access = m_memfile.GetWriteAccess(m_timeout_open);
+    bool write_access = m_memfile.GetWriteAccess(m_attr.timeout_open_ms);
 
     // maybe it's locked by a zombie or a crashed process
     // so we try to recreate a new one
@@ -183,7 +180,7 @@ namespace eCAL
       if (!Recreate(m_memfile.MaxDataSize())) return false;
 
       // then try to get access again
-      write_access = m_memfile.GetWriteAccess(m_timeout_open);
+      write_access = m_memfile.GetWriteAccess(m_attr.timeout_open_ms);
       // still no chance ? hell .... we give up
       if (!write_access)
       {
@@ -200,9 +197,9 @@ namespace eCAL
     written &= m_memfile.Write(&memfile_hdr, memfile_hdr.hdr_size, wbytes) > 0;
     wbytes += memfile_hdr.hdr_size;
     // write the buffer
-    if (len_ > 0)
+    if (data_.len > 0)
     {
-      written &= m_memfile.Write(buf_, len_, wbytes) > 0;
+      written &= m_memfile.Write(data_.buf, data_.len, wbytes) > 0;
     }
     // release write access
     m_memfile.ReleaseWriteAccess();
@@ -213,7 +210,7 @@ namespace eCAL
     if (written)
     {
 #ifndef NDEBUG
-      Logging::Log(log_level_debug4, m_base_name + "::CSyncMemoryFile::Write - SUCCESS : " + std::to_string(len_) + " Bytes written");
+      Logging::Log(log_level_debug4, m_base_name + "::CSyncMemoryFile::Write - SUCCESS : " + std::to_string(data_.len) + " Bytes written");
 #endif
     }
     else
@@ -242,7 +239,7 @@ namespace eCAL
     // with additional space for SMemFileHeader
     size_t memfile_size = sizeof(SMemFileHeader) + size_;
     // check for minimal size
-    if (memfile_size < m_min_size) memfile_size = m_min_size;
+    if (memfile_size < m_attr.min_size) memfile_size = m_attr.min_size;
 
     // create the memory file
     if (!m_memfile.Create(m_memfile_name.c_str(), true, memfile_size))
@@ -257,7 +254,7 @@ namespace eCAL
 
     // initialize memory file with empty header
     struct SMemFileHeader memfile_hdr;
-    m_memfile.GetWriteAccess(m_timeout_open);
+    m_memfile.GetWriteAccess(m_attr.timeout_open_ms);
     m_memfile.Write(&memfile_hdr, memfile_hdr.hdr_size, 0);
     m_memfile.ReleaseWriteAccess();
 
@@ -349,7 +346,7 @@ namespace eCAL
     std::lock_guard<std::mutex> lock(m_event_handle_map_sync);
 
     // "eat" old acknowledge events :)
-    if (m_timeout_ack != 0)
+    if (m_attr.timeout_ack_ms != 0)
     {
       for (auto iter : m_event_handle_map)
       {
@@ -364,9 +361,9 @@ namespace eCAL
       gSetEvent(iter->second.event_snd);
 
       // sync on acknowledge event
-      if (m_timeout_ack != 0)
+      if (m_attr.timeout_ack_ms != 0)
       {
-        if (!gWaitForEvent(iter->second.event_ack, m_timeout_ack))
+        if (!gWaitForEvent(iter->second.event_ack, m_attr.timeout_ack_ms))
         {
           // we close the event immediately to not waste time in the next
           // write call, the event will be reopened later
@@ -388,7 +385,7 @@ namespace eCAL
 
   void CSyncMemoryFile::DisconnectAll()
   {
-    if (m_timeout_ack != 0)
+    if (m_attr.timeout_ack_ms != 0)
     {
       // fire acknowledge events, to unlock blocking send function
       std::lock_guard<std::mutex> lock(m_event_handle_map_sync);
@@ -405,7 +402,7 @@ namespace eCAL
       {
         gCloseEvent(iter->second.event_snd);
         gInvalidateEvent(&iter->second.event_snd);
-        if (m_timeout_ack != 0)
+        if (m_attr.timeout_ack_ms != 0)
         {
           gCloseEvent(iter->second.event_ack);
           gInvalidateEvent(&iter->second.event_ack);
