@@ -32,6 +32,8 @@
 #include "io/ecal_memfile_db.h"
 
 #include <memory>
+#include <string>
+#include <vector>
 
 namespace eCAL
 {
