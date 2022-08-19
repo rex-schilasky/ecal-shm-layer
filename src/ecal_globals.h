@@ -27,21 +27,9 @@
 #pragma once
 
 #include "ecal_global_accessors.h"
-//#include "ecal_reggate.h"
-//#include "ecal_descgate.h"
-//#include "ecal_timegate.h"
-//#include "ecal_register.h"
-//#include "ecal_log_impl.h"
-//#include "mon/ecal_monitoring_def.h"
-//#include "pubsub/ecal_pubgate.h"
-//#include "pubsub/ecal_subgate.h"
-//#include "service/ecal_servicegate.h"
-//#include "service/ecal_clientgate.h"
 
-#ifndef ECAL_LAYER_ICEORYX
 //#include "io/ecal_memfile_pool.h"
 #include "io/ecal_memfile_db.h"
-#endif /* !ECAL_LAYER_ICEORYX */
 
 #include <memory>
 
@@ -60,39 +48,13 @@ namespace eCAL
 
     int Finalize(unsigned int components_);
 
-    //const std::unique_ptr<CConfig>&                                       config()           { return config_instance; };
-    //const std::unique_ptr<CLog>&                                          log()              { return log_instance; };
-    //const std::unique_ptr<CMonitoring>&                                   monitoring()       { return monitoring_instance; };
-    //const std::unique_ptr<CTimeGate>&                                     timegate()         { return timegate_instance; };
-    //const std::unique_ptr<CSubGate>&                                      subgate()          { return subgate_instance; };
-    //const std::unique_ptr<CPubGate>&                                      pubgate()          { return pubgate_instance; };
-    //const std::unique_ptr<CServiceGate>&                                  servicegate()      { return servicegate_instance; };
-    //const std::unique_ptr<CClientGate>&                                   clientgate()       { return clientgate_instance; };
-    //const std::unique_ptr<CEntityRegister>&                               entity_register()  { return entity_register_instance; };
-    //const std::unique_ptr<CDescGate>&                                     descgate()         { return descgate_instance; };
-    //const std::unique_ptr<CRegGate>&                                      reggate()          { return reggate_instance; };
-#ifndef ECAL_LAYER_ICEORYX
-    //const std::unique_ptr<CMemFileThreadPool>&                            memfile_pool()     { return memfile_pool_instance; };
-    const std::unique_ptr<CMemFileMap>&                                   memfile_map()      { return memfile_map_instance; };
-#endif /* !ECAL_LAYER_ICEORYX */
+    //const std::unique_ptr<CMemFileThreadPool>&     memfile_pool()     { return memfile_pool_instance; };
+    const std::unique_ptr<CMemFileMap>&            memfile_map()      { return memfile_map_instance; };
 
   private:
-    bool                                                                  initialized;
-    unsigned int                                                          components;
-    //std::unique_ptr<CConfig>                                              config_instance;
-    //std::unique_ptr<CLog>                                                 log_instance;
-    //std::unique_ptr<CMonitoring>                                          monitoring_instance;
-    //std::unique_ptr<CTimeGate>                                            timegate_instance;
-    //std::unique_ptr<CSubGate>                                             subgate_instance;
-    //std::unique_ptr<CPubGate>                                             pubgate_instance;
-    //std::unique_ptr<CServiceGate>                                         servicegate_instance;
-    //std::unique_ptr<CClientGate>                                          clientgate_instance;
-    //std::unique_ptr<CEntityRegister>                                      entity_register_instance;
-    //std::unique_ptr<CDescGate>                                            descgate_instance;
-    //std::unique_ptr<CRegGate>                                             reggate_instance;
-#ifndef ECAL_LAYER_ICEORYX
-    //std::unique_ptr<CMemFileThreadPool>                                   memfile_pool_instance;
-    std::unique_ptr<CMemFileMap>                                          memfile_map_instance;
-#endif /* !ECAL_LAYER_ICEORYX */
+    bool                                           initialized;
+    unsigned int                                   components;
+    //std::unique_ptr<CMemFileThreadPool>            memfile_pool_instance;
+    std::unique_ptr<CMemFileMap>                   memfile_map_instance;
   };
 }
