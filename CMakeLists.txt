@@ -31,8 +31,8 @@ set(ecal_shm_layer_src
     src/io/ecal_memfile_info.h
     src/io/ecal_memfile_mtx.h
     src/io/ecal_memfile_os.h
-    #src/io/ecal_memfile_pool.cpp
-    #src/io/ecal_memfile_pool.h
+    src/io/ecal_memfile_pool.cpp
+    src/io/ecal_memfile_pool.h
     src/io/ecal_memfile_sync.cpp
     src/io/ecal_memfile_sync.h
     src/io/ecal_win_main.h
